@@ -23,8 +23,6 @@ async function payWallet(amount, address, wallet, provider) {
         console.log(`Current status is ${result.status}`);
         if (result.status.isInBlock) {
           console.log(`tx included at blockHash ${result.status.asInBlock}`);
-        } else if (result.status.isFinalized) {
-          console.log(`tx finalized at blockHash ${result.status.asFinalized}`);
           resolve(result);
           unsub();
         }
@@ -41,10 +39,8 @@ async function main() {
 
   console.log("Initiating payment from:", wallet.address);
 
-  const address =
-    process.env.REEF_ADDRESS ||
-    "5GCcgnwdLhwq3HmjsRaotPY5PuF8ivVcRTtP75JJPk7uzTMJ";
-  const amount = process.env.REEF_AMOUNT || "";
+  const address = process.env.REEF_ADDRESS;
+  const amount = process.env.REEF_AMOUNT;
 
   console.log("Paying wallet:", address, amount);
   payWallet(amount, address, wallet, provider).then((res) => {

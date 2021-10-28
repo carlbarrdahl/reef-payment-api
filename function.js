@@ -172,7 +172,7 @@ app.post("/pay", async (req, res) => {
 // Watches an address for changes and compares new balance with requested amount
 async function waitForFunds(address, amount, api) {
   console.log("Watching for changes in created wallet:", address);
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const unsub = await api.query.system.account(
       address,
       async ({ data: { free: balance } }) => {
@@ -188,7 +188,7 @@ async function waitForFunds(address, amount, api) {
 }
 
 // Sends payment to wallet
-async function payWallet(amount, address, wallet, api) {
+async function payWallet(address, amount, wallet, api) {
   return new Promise(async (resolve, reject) => {
     const unsub = await api.tx.balances
       .transfer(address, amount)
@@ -196,8 +196,6 @@ async function payWallet(amount, address, wallet, api) {
         console.log(`Current status is ${result.status}`);
         if (result.status.isInBlock) {
           console.log(`tx included at blockHash ${result.status.asInBlock}`);
-        } else if (result.status.isFinalized) {
-          console.log(`tx finalized at blockHash ${result.status.asFinalized}`);
           resolve(result);
           unsub();
         }
@@ -244,9 +242,7 @@ app.get("/merchant/store", async (req, res) => {
     .ref(`/payments/${req.query.address}`)
     .once("value")
     .then((snap) => snap.val());
-  res.send(payment);
+  res.send(payment || {});
 });
 
-exports.api = functions
-  .runWith({ timeoutSeconds: 300, memory: "1GB" })
-  .https.onRequest(app);
+exports.api = functions.https.onRequest(app);
