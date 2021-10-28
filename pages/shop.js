@@ -164,7 +164,7 @@ export default function MerchantDemo() {
                     disabled={isLoading}
                     mb={4}
                   />
-                  <InputRightAddon children="REEF" />
+                  <InputRightAddon>REEF</InputRightAddon>
                 </InputGroup>
               </FormControl>
               <Button type="submit" isFullWidth disabled={isLoading}>
