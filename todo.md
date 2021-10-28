@@ -1,0 +1,36 @@
+- Users
+
+  - app admin
+  - merchant admin
+  - paying customer
+
+- [x] Add ChakraUI
+- [x] Admin UI
+  - [x] Auth - signIn/signOut
+  - [x] Create API key
+    - [x] Create custom token
+    - [x] Store token in db
+    - [x] Show in UI
+  - [x] Set wallet address
+    - [x] UI to enter address and save
+    - [x] Store in db
+  - [x] Monitor / manage payments
+    - [x] Query transactions for address
+    - [x] UI to update address
+    - [x] Search address
+  - [ ] Webhooks whitelist (out of scope)
+  - [ ] Refund payment (out of scope)
+  - [ ] Merchants list for admins (out of scope?)
+- [x] Shop UI
+  - [x] Inputs for API key, webhook and amount
+  - [x] Call payment api
+  - [x] Update UI with address
+  - [x] Update UI on payment success
+- [ ] Payment API endpoint
+  - [x] Verify API key
+  - [x] Validate amount and webhookUrl
+  - [x] Generate unique wallet address and return to caller
+  - [ ] Listen to transfers into address
+  - [x] Transfer amount from new wallet into main account
+  - [x] Trigger webhook when tx fulfills
+  - [ ] Deploy to Firebase
