@@ -2,7 +2,6 @@
   "database": {
     "rules": "database.rules.json"
   },
-
   "hosting": {
     "public": "out",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**", ".git/**"],
@@ -11,18 +10,15 @@
         "source": "**",
         "function": "/index.html"
       },
-      { "source": "/api", "function": "api" }
+      {
+        "source": "/api",
+        "function": "api"
+      }
     ]
   },
   "functions": {
-    "source": ".",
+    "source": "./functions",
     "runtime": "nodejs14",
-    "ignore": [
-      ".git/**",
-      ".firebase/**",
-      ".firebaserc",
-      "firebase.json",
-      "**/node_modules/**"
-    ]
+    "ignore": []
   }
 }

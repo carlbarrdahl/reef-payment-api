@@ -1,5 +1,9 @@
+const isDev = process.env.NODE_ENV !== "production";
+
 module.exports = {
-  apiURL: "http://localhost:5001/reef-payment-api/us-central1",
+  apiURL: isDev
+    ? "http://localhost:5001/reef-payment-api/us-central1"
+    : "https://us-central1-reef-payment-api.cloudfunctions.net",
   network: {
     tokenSymbol: "REEF",
     tokenDecimals: 18,

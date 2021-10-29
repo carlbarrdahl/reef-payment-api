@@ -11,8 +11,6 @@ const { Provider } = require("@reef-defi/evm-provider");
 const { Keyring } = require("@polkadot/api");
 const { mnemonicGenerate } = require("@polkadot/util-crypto");
 
-const config = require("./config");
-
 const app = express();
 
 app.use(cors({ origin: true }));
@@ -20,7 +18,7 @@ app.use(cors({ origin: true }));
 
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
-  databaseURL: config.firebase.databaseURL,
+  databaseURL: "https://reef-payment-api-default-rtdb.firebaseio.com",
 });
 
 // For Merchant admin UI
@@ -33,6 +31,7 @@ async function authMiddleware(req, res, next) {
     next(error);
   }
 }
+app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
 
 /*
 API key management
@@ -145,7 +144,7 @@ app.post("/pay", async (req, res) => {
 
     console.log("Create Reef client");
     const provider = new Provider({
-      provider: new WsProvider(config.network.networkURL),
+      provider: new WsProvider("wss://rpc-testnet.reefscan.com/ws"),
     });
     await provider.api.isReadyOrError;
 
@@ -159,9 +158,19 @@ app.post("/pay", async (req, res) => {
       address: tempWallet.address,
     });
 
-    await waitForFunds(tempWallet.address, amount, provider.api);
-    const event = await payWallet(address, amount, tempWallet, provider.api);
+    const amountInAddress = await waitForFunds(
+      tempWallet.address,
+      amount,
+      provider.api
+    );
+    const event = await payWallet(
+      address,
+      amountInAddress,
+      tempWallet,
+      provider.api
+    );
     await callWebhook(webhookURL, { address: tempWallet.address, event });
+
     console.log("All done!");
   } catch (error) {
     console.log(error);
@@ -175,12 +184,16 @@ async function waitForFunds(address, amount, api) {
   return new Promise(async (resolve, reject) => {
     const unsub = await api.query.system.account(
       address,
-      async ({ data: { free: balance } }) => {
-        console.log("Balance changed:", balance.toHuman(), balance.toString());
-        console.log("Verify it's same as payment amount:", amount);
-        if (balance.toString() === amount) {
+      async ({ data: { free } }) => {
+        const balance = free.toBigInt();
+        console.log("Balance changed:", balance);
+        console.log("Verify it's same as payment amount:", BigInt(amount));
+        if (balance >= BigInt(amount)) {
           unsub();
-          resolve();
+          resolve(balance);
+        } else {
+          console.log("Balance is less than expected amount");
+          console.log("Waiting for more transfers...");
         }
       }
     );
@@ -190,8 +203,19 @@ async function waitForFunds(address, amount, api) {
 // Sends payment to wallet
 async function payWallet(address, amount, wallet, api) {
   return new Promise(async (resolve, reject) => {
-    const unsub = await api.tx.balances
+    console.log("Getting transaction fee");
+    const { partialFee } = await api.tx.balances
       .transfer(address, amount)
+      .paymentInfo(wallet);
+
+    const fee = partialFee.toBigInt();
+    const amountWithoutFee = amount - fee;
+    console.log("Fee:", fee);
+    console.log(
+      `Transfering: ${amountWithoutFee} to ${address} from ${wallet.address}`
+    );
+    const unsub = await api.tx.balances
+      .transfer(address, amountWithoutFee)
       .signAndSend(wallet, async (result) => {
         console.log(`Current status is ${result.status}`);
         if (result.status.isInBlock) {
@@ -215,11 +239,11 @@ function createRandomWallet() {
   return keyring.addFromMnemonic(mnemonicGenerate());
 }
 
-/* 
+/*
 Merchant demo
 
-These two endpoints should be in Merchants system. 
-They update their internal database when webhook is called (payment received) 
+These two endpoints should be in Merchants system.
+They update their internal database when webhook is called (payment received)
 and returns payment info when queried so we can update UI
 
 */
@@ -245,4 +269,9 @@ app.get("/merchant/store", async (req, res) => {
   res.send(payment || {});
 });
 
-exports.api = functions.https.onRequest(app);
+exports.api = functions
+  .runWith({
+    timeoutSeconds: 3 * 60,
+    memory: "1GB",
+  })
+  .https.onRequest(app);

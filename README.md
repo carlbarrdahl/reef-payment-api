@@ -19,6 +19,15 @@ yarn dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+#### Start the http api emulator
+
+```bash
+cd functions
+npm run serve
+```
+
+API is now available at: http://localhost:5001/reef-payment-api/us-central1/api
+
 ## Instructions
 
 - Go to http://localhost:3000 and sign in

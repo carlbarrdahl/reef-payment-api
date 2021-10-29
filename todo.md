@@ -26,11 +26,12 @@
   - [x] Call payment api
   - [x] Update UI with address
   - [x] Update UI on payment success
-- [ ] Payment API endpoint
+- [x] Payment API endpoint
   - [x] Verify API key
   - [x] Validate amount and webhookUrl
   - [x] Generate unique wallet address and return to caller
-  - [ ] Listen to transfers into address
+  - [x] Listen to transfers into address
+  - [x] Calculate transaction fee and subtract
   - [x] Transfer amount from new wallet into main account
   - [x] Trigger webhook when tx fulfills
-  - [ ] Deploy to Firebase
+  - [x] Deploy to Firebase
