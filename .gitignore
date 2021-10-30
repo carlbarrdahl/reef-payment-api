@@ -35,4 +35,7 @@ yarn-error.log*
 
 serviceAccountKey.json
 
-.firebase
+.firebase/**
+
+firebase-debug.log
+functions/firebase-debug.log

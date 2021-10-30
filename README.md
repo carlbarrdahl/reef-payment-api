@@ -7,6 +7,11 @@
 ![](screenshot_admin.png)
 ![](screenshot_shop1.png)
 
+#### Created as a submission to DeFi & Cross-Chain Interoperability Hackathon
+
+- Link:
+  https://gitcoin.co/issue/reef-defi/reef-finance-bounties/1/100026837
+
 ## Getting Started
 
 First, run the development server:

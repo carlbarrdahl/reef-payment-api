@@ -11,6 +11,10 @@
         "function": "/index.html"
       },
       {
+        "source": "/shop",
+        "function": "/shop.html"
+      },
+      {
         "source": "/api",
         "function": "api"
       }
