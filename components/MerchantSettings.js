@@ -12,6 +12,7 @@ import {
   FormLabel,
   FormHelperText,
   Spinner,
+  Skeleton,
 } from "@chakra-ui/react";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
 import { useEffect, useState } from "react";
@@ -92,12 +93,13 @@ function ConfigWalletAddress() {
           <ErrorMessage error={error} retry={refetch} />
         ) : (
           <Flex>
-            <Input
-              mr={4}
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Enter wallet address to transfer funds to..."
-            />
+            <Skeleton flex="1" isLoaded={!isLoading} mr={4}>
+              <Input
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Enter wallet address to transfer funds to..."
+              />
+            </Skeleton>
             <Button type="submit" disabled={isLoading}>
               Save address
             </Button>
