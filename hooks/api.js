@@ -56,19 +56,16 @@ export const useWalletAddress = () => {
         "Content-Type": "application/json",
         Authorization: "Bearer " + auth.currentUser.accessToken,
       },
-    });
+    }).then(() => queryClient.invalidateQueries("wallet"));
   });
 
-  const get = useQuery(
-    "wallet",
-    () =>
-      request(`/api/wallet`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + auth.currentUser.accessToken,
-        },
-      })
-    // { enabled: false } // Lazy-loading of api key
+  const get = useQuery("wallet", () =>
+    request(`/api/wallet`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + auth.currentUser.accessToken,
+      },
+    })
   );
 
   return {
