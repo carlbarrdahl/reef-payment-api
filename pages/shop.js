@@ -21,6 +21,8 @@ import { useMutation, useQuery } from "react-query";
 
 import { useForm } from "react-hook-form";
 import config from "../config";
+import { useWallet } from "../hooks/wallet";
+import { useEffect } from "react";
 
 function useWatchPayment(address) {
   return useQuery(
@@ -69,7 +71,6 @@ const store = {
 
 function WaitingForPayment({ amount, address }) {
   const { data, error, isLoading } = useWatchPayment(address);
-
   console.log("WaitingForPayment", data, error, isLoading);
   return (
     <Alert
@@ -107,7 +108,8 @@ function WaitingForPayment({ amount, address }) {
           <Input value={address} readOnly size="sm" mb={4} />
           <AlertDescription>
             <Text fontWeight="bold" as="span">
-              {amount} {config.network.tokenSymbol}
+              {amount / 10 ** config.network.tokenDecimals}{" "}
+              {config.network.tokenSymbol}
             </Text>
           </AlertDescription>
         </>
@@ -120,10 +122,18 @@ export default function MerchantDemo() {
   const { register, handleSubmit, ...rest } = useForm({
     defaultValues: store.get(),
   });
+  const wallet = useWallet();
+
+  console.log("wallet", wallet);
 
   const { data, error, isLoading, mutateAsync: createPayment } = usePayment();
 
-  // data.address = "5GCcgnwdLhwq3HmjsRaotPY5PuF8ivVcRTtP75JJPk7uzTMJ";
+  useEffect(() => {
+    if (data?.address) {
+      wallet.transfer(data.address, data.amount);
+    }
+  }, [data?.address]);
+
   function sendAndSave(values) {
     // Store in localStorage so we don't have to enter them every time
     try {
