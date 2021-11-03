@@ -26,6 +26,7 @@
   - [x] Call payment api
   - [x] Update UI with address
   - [x] Update UI on payment success
+  - [x] Pay with browser wallet
 - [x] Payment API endpoint
   - [x] Verify API key
   - [x] Validate amount and webhookUrl
