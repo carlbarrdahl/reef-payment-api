@@ -163,9 +163,17 @@ app.post("/pay", async (req, res) => {
       amount,
       provider.api
     );
+    console.log("Getting transaction fee");
+    const { partialFee } = await provider.api.tx.balances
+      .transfer(address, amount)
+      .paymentInfo(tempWallet);
+
+    const fee = partialFee.toBigInt();
+    console.log("Fee:", fee);
+
     const event = await payWallet(
       address,
-      amountInAddress,
+      amountInAddress - fee,
       tempWallet,
       provider.api
     );
@@ -203,19 +211,9 @@ async function waitForFunds(address, amount, api) {
 // Sends payment to wallet
 async function payWallet(address, amount, wallet, api) {
   return new Promise(async (resolve, reject) => {
-    console.log("Getting transaction fee");
-    const { partialFee } = await api.tx.balances
-      .transfer(address, amount)
-      .paymentInfo(wallet);
-
-    const fee = partialFee.toBigInt();
-    const amountWithoutFee = amount - fee;
-    console.log("Fee:", fee);
-    console.log(
-      `Transfering: ${amountWithoutFee} to ${address} from ${wallet.address}`
-    );
+    console.log(`Transfering: ${amount} to ${address} from ${wallet.address}`);
     const unsub = await api.tx.balances
-      .transfer(address, amountWithoutFee)
+      .transfer(address, amount)
       .signAndSend(wallet, async (result) => {
         console.log(`Current status is ${result.status}`);
         if (result.status.isInBlock) {

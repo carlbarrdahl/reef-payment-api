@@ -5,6 +5,7 @@ import {
   Heading,
   Text,
   Input,
+  Link,
   IconButton,
   InputGroup,
   InputRightElement,
@@ -20,6 +21,7 @@ import { useEffect, useState } from "react";
 import { useAPIKey, useWalletAddress } from "../hooks/api";
 
 import ErrorMessage from "./ErrorMessage";
+import { useWallet } from "../hooks/wallet";
 
 function ConfigAPIKey() {
   const [showKey, toggleShowKey] = useState(false);
@@ -70,12 +72,21 @@ function ConfigAPIKey() {
 
 function ConfigWalletAddress() {
   const [address, setAddress] = useState("");
-  const { wallet, save, error, refetch, isLoading } = useWalletAddress();
+  const { wallet } = useWallet();
 
+  const {
+    wallet: walletAddress,
+    save,
+    error,
+    refetch,
+    isLoading,
+  } = useWalletAddress();
+
+  console.log("wallet", wallet);
   // Update input field if server returns data
   useEffect(() => {
-    setAddress(wallet);
-  }, [wallet]);
+    setAddress(walletAddress);
+  }, [walletAddress]);
 
   return (
     <form
@@ -88,6 +99,15 @@ function ConfigWalletAddress() {
         <FormLabel>Wallet address</FormLabel>
         <FormHelperText mb={3}>
           Wallet to transfer funds to when balace is settled in payment
+          <Text mt={2}>
+            Currently signed in with:{" "}
+            <Link
+              color="blue.500"
+              onClick={() => setAddress(wallet?._substrateAddress)}
+            >
+              {wallet?._substrateAddress}
+            </Link>
+          </Text>
         </FormHelperText>
         {error ? (
           <ErrorMessage error={error} retry={refetch} />

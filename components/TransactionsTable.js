@@ -1,4 +1,8 @@
 import {
+  Button,
+  Menu,
+  MenuButton,
+  MenuList,
   Table,
   Thead,
   Tbody,
@@ -26,7 +30,7 @@ const SUBSCRIPTION_QUERY = gql`
       order_by: { block_number: desc }
       where: {
         _or: [
-          { source: { _eq: $accountId } }
+          # { source: { _eq: $accountId } }
           { destination: { _eq: $accountId } }
         ]
       }
@@ -52,6 +56,7 @@ function TableWithData({ accountId, onChangeAddress }) {
   const { data, loading, error } = useSubscription(SUBSCRIPTION_QUERY, {
     variables: { accountId },
   });
+  const { wallet } = useWalletAddress();
 
   return (
     <Table size="sm">
@@ -63,6 +68,7 @@ function TableWithData({ accountId, onChangeAddress }) {
           <Th>To</Th>
           <Th>Amount</Th>
           <Th>Success</Th>
+          <Th></Th>
         </Tr>
       </Thead>
       <Tbody>
@@ -98,6 +104,17 @@ function TableWithData({ accountId, onChangeAddress }) {
                 ) : (
                   <WarningIcon color={"red.500"} />
                 )}
+              </Td>
+              <Td>
+                {tx.destination === wallet ? (
+                  <Button
+                    variant="ghost"
+                    colorScheme="blue"
+                    onClick={() => alert("not implemented yet")}
+                  >
+                    Refund
+                  </Button>
+                ) : null}
               </Td>
             </Tr>
           ))
