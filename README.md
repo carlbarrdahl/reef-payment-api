@@ -9,13 +9,13 @@ Works like this:
 3. Customer navigates to Merchant Shop and initiates a payment
 4. Payment API generates random wallet and returns address while listening to incoming transactions
 5. Customer sends payment to generated address
-6. Payment API transfers incoming payment to configured wallet address and calls webhook
+6. Payment API transfers incoming payment (minus tx fee) to configured wallet address and calls webhook
 7. Merchant Shop UI is updated to show payment successful
 8. Transactions to address is visible in Merchant Admin UI
 
 - Demo: https://reef-payment-api.web.app/
 - Merchant Shop Demo: https://reef-payment-api.web.app/shop
-- Video: https://www.loom.com/share/
+- Video: https://www.loom.com/share/c1dae7c082c74de5bcf2fa849cc26958
 
 ### Future improvements
 
