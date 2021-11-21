@@ -1,13 +1,7 @@
 import {
-  Alert,
-  AlertTitle,
-  AlertIcon,
-  AlertDescription,
   Box,
   Image,
   Flex,
-  Text,
-  Link,
   Button,
   Input,
   InputGroup,
@@ -17,37 +11,25 @@ import {
   Spinner,
 } from "@chakra-ui/react";
 import { request } from "../lib/request";
-import { useMutation, useQuery } from "react-query";
-
+import { useMutation } from "react-query";
+import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 import config from "../config";
 import { useWallet } from "../hooks/wallet";
-import { useEffect } from "react";
-
-function useWatchPayment(address) {
-  return useQuery(
-    ["payment", address],
-    () => {
-      return request(`/api/merchant/store?address=${address}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-    },
-    { refetchInterval: 2000 }
-  );
-}
 
 function usePayment() {
-  return useMutation(({ apiKey, amount, webhookURL }) => {
-    return request(`/api/pay`, {
+  return useMutation(({ apiKey, amount, address, redirectURL }) => {
+    return request(`/api/checkout`, {
       method: "POST",
       body: JSON.stringify({
+        paymentId: Math.random().toString(16).substr(2),
+        address,
         amount: (
           Number(amount) *
           10 ** config.network.tokenDecimals
         ).toString(),
-        webhookURL,
+        redirectURL,
+        timestamp: Date.now(),
       }),
       headers: {
         "Content-Type": "application/json",
@@ -69,56 +51,8 @@ const store = {
   },
 };
 
-function WaitingForPayment({ amount, address }) {
-  const { data, error, isLoading } = useWatchPayment(address);
-  console.log("WaitingForPayment", data, error, isLoading);
-  return (
-    <Alert
-      colorScheme="white"
-      variant="subtle"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      textAlign="center"
-      height="200px"
-    >
-      {data?.status ? (
-        <>
-          <AlertIcon boxSize="40px" mr={0} />
-          <AlertTitle mt={4} mb={1} fontSize="lg">
-            Payment received!
-          </AlertTitle>
-          <AlertDescription maxWidth="sm" mb={4}>
-            Thanks for shopping with REEF
-          </AlertDescription>
-          <Link
-            color="blue.500"
-            href={`https://testnet.reefscan.com/block/${data?.status.finalized}`}
-            target="_blank"
-          >
-            View block in explorer
-          </Link>
-        </>
-      ) : (
-        <>
-          <Spinner />
-          <AlertTitle mt={4} mb={1} fontSize="lg">
-            Waiting for payment to
-          </AlertTitle>
-          <Input value={address} readOnly size="sm" mb={4} />
-          <AlertDescription>
-            <Text fontWeight="bold" as="span">
-              {amount / 10 ** config.network.tokenDecimals}{" "}
-              {config.network.tokenSymbol}
-            </Text>
-          </AlertDescription>
-        </>
-      )}
-    </Alert>
-  );
-}
-
 export default function MerchantDemo() {
+  const router = useRouter();
   const { register, handleSubmit, ...rest } = useForm({
     defaultValues: store.get(),
   });
@@ -128,18 +62,18 @@ export default function MerchantDemo() {
 
   const { data, error, isLoading, mutateAsync: createPayment } = usePayment();
 
-  useEffect(() => {
-    if (data?.address) {
-      wallet.transfer(data.address, data.amount);
-    }
-  }, [data?.address]);
-
+  console.log("ERORR", error);
   function sendAndSave(values) {
     // Store in localStorage so we don't have to enter them every time
     try {
       store.set(values);
     } catch (error) {}
-    createPayment(values);
+    createPayment({ ...values, address: wallet.wallet._substrateAddress })
+      .then(({ checkoutURL }) => {
+        console.log("Checkout URL", checkoutURL);
+        router.replace(checkoutURL);
+      })
+      .catch(console.log);
   }
 
   console.log("MerchantDemo", data, error, isLoading, rest);
@@ -156,32 +90,32 @@ export default function MerchantDemo() {
       <Box maxW={380} as="form" onSubmit={handleSubmit(sendAndSave)}>
         <Box bg="white" boxShadow="lg">
           <Image src="https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1372&q=80" />
-          {data?.address ? (
-            <WaitingForPayment {...data} />
-          ) : (
-            <Box p={8} mb={8}>
-              <FormControl>
-                <FormLabel fontSize="sm" mb={1}>
-                  Amount
-                </FormLabel>
-                <InputGroup size="sm">
-                  <Input
-                    required
-                    step={"any"}
-                    type="number"
-                    {...register("amount")}
-                    placeholder="Enter amount to pay..."
-                    disabled={isLoading}
-                    mb={4}
-                  />
-                  <InputRightAddon>REEF</InputRightAddon>
-                </InputGroup>
-              </FormControl>
-              <Button type="submit" isFullWidth disabled={isLoading}>
-                {isLoading ? <Spinner /> : "Pay"}
-              </Button>
-            </Box>
-          )}
+          <Box p={8} mb={8}>
+            <FormControl>
+              <FormLabel fontSize="sm" mb={1}>
+                Amount
+              </FormLabel>
+              <InputGroup size="sm">
+                <Input
+                  required
+                  step={"any"}
+                  type="number"
+                  {...register("amount")}
+                  placeholder="Enter amount to pay..."
+                  disabled={isLoading}
+                  mb={4}
+                />
+                <InputRightAddon>REEF</InputRightAddon>
+              </InputGroup>
+            </FormControl>
+            <Button
+              type="submit"
+              isFullWidth
+              disabled={isLoading || !wallet.wallet}
+            >
+              {isLoading || !wallet.wallet ? <Spinner /> : "Pay with Reef"}
+            </Button>
+          </Box>
         </Box>
         {isLoading || data?.address ? null : (
           <Box bg="white" boxShadow="lg" p={8}>
@@ -195,12 +129,15 @@ export default function MerchantDemo() {
                 mb={4}
               />
             </FormControl>
+
             <FormControl>
-              <FormLabel mb={1}>Webhook to trigger after payment</FormLabel>
+              <FormLabel mb={1}>
+                Redirect URL when payment is received
+              </FormLabel>
               <Input
                 required
                 size="sm"
-                {...register("webhookURL")}
+                {...register("redirectURL")}
                 placeholder="https://"
                 mb={4}
               />

@@ -138,27 +138,7 @@ export default function MerchantSettings(props) {
       </Heading>
 
       <ConfigAPIKey />
-
       <ConfigWalletAddress />
-
-      <FormControl id="webhook">
-        <FormLabel>
-          Webhook URLs{" "}
-          <Text as="span" fontSize={"xs"}>
-            (not implemented yet)
-          </Text>
-        </FormLabel>
-        <FormHelperText mb={3}>
-          Allowed URLs in Payment API call as comma-seperated list (e.g
-          https://merchant.io, https://staging.merchant.io).
-        </FormHelperText>
-        <Flex>
-          <Input mr={4} placeholder="Enter URLs to whitelist for webhook..." />
-          <Button disabled onClick={() => alert("Not implemented yet")}>
-            Save URLs
-          </Button>
-        </Flex>
-      </FormControl>
     </Box>
   );
 }
