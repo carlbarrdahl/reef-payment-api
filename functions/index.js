@@ -17,12 +17,10 @@ require("./routes/key")(app, context);
 require("./routes/wallet")(app, context);
 require("./routes/checkout")(app, context);
 
-app.use((error, request, response, next) => {
-  console.log("ERROR", error, error.message, error.toString());
+app.use((error, req, res, next) => {
   // Check the error is a validation error
   if (error instanceof BadRequest) {
-    // Handle the error
-    response.status(400).send(error.message);
+    res.status(400).send(error.message);
     next();
   } else {
     // Pass error on if not a validation error

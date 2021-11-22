@@ -5,9 +5,9 @@ import {
   Input,
   FormControl,
   FormLabel,
+  Skeleton,
   Spinner,
 } from "@chakra-ui/react";
-import { useRouter } from "next/router";
 
 import { useAPIKey, useCheckout, useWalletAddress } from "../hooks/api";
 
@@ -22,87 +22,89 @@ const store = {
     return {};
   },
   set: (val) => {
-    localStorage.setItem("merchant-shop", JSON.stringify(val));
+    try {
+      localStorage.setItem("merchant-shop", JSON.stringify(val));
+    } catch (error) {}
   },
 };
 
-export default function SimulatePayment(props) {
-  const router = useRouter();
-  const { register, handleSubmit, ...rest } = useForm({
+function PaymentForm({ address, apiKey, isLoading, onSubmit }) {
+  const { register, handleSubmit } = useForm({
     defaultValues: {
       ...store.get(),
+      address,
+      apiKey,
       paymentId: Math.random().toString(16).substr(2),
     },
   });
-
+  return (
+    <Box as="form" onSubmit={handleSubmit(onSubmit)}>
+      <FormControl>
+        <FormLabel mb={1}>Payment ID</FormLabel>
+        <Input required {...register("paymentId")} size="sm" mb={4} />
+      </FormControl>
+      <FormControl>
+        <FormLabel mb={1}>Amount</FormLabel>
+        <Input required {...register("amount")} size="sm" mb={4} />
+      </FormControl>
+      <FormControl>
+        <FormLabel mb={1}>Wallet address</FormLabel>
+        <Input required {...register("address")} size="sm" mb={4} />
+      </FormControl>
+      <FormControl>
+        <FormLabel mb={1}>API Key</FormLabel>
+        <Input required {...register("apiKey")} size="sm" mb={4} />
+      </FormControl>
+      <FormControl>
+        <FormLabel mb={1}>Redirect URL when payment is received</FormLabel>
+        <Input
+          required
+          size="sm"
+          placeholder="https://"
+          {...register("redirectURL")}
+          mb={4}
+        />
+      </FormControl>
+      <Button type="submit" isFullWidth disabled={isLoading}>
+        {isLoading ? <Spinner /> : "Checkout with Reef"}
+      </Button>
+    </Box>
+  );
+}
+export default function SimulatePayment(props) {
   const walletAddress = useWalletAddress();
-
   const apiKey = useAPIKey();
-
   const checkout = useCheckout();
-  console.log({ walletAddress, apiKey, checkout });
+
   function sendAndSave(values) {
-    console.log("VALUES", values);
     // Store in localStorage so we don't have to enter them every time
-    try {
-      store.set(values);
-    } catch (error) {}
+    store.set(values);
     checkout
       .mutateAsync({ ...values })
-      .then(({ checkoutURL }) => {
-        console.log("Checkout URL", checkoutURL);
-        router.replace(checkoutURL);
-      })
+      .then(({ checkoutURL }) => (window.location = checkoutURL))
       .catch(console.log);
   }
 
-  const isLoading =
-    walletAddress.isLoading || apiKey.isLoading || checkout.isLoading;
+  const isLoading = walletAddress.isLoading || apiKey.isLoading;
+  const error = walletAddress.error || apiKey.error || checkout.error;
 
   return (
     <Box mb={16}>
       <Heading size="md" mb={4}>
         Simulate payment
       </Heading>
-      <Box maxW={380} as="form" onSubmit={handleSubmit(sendAndSave)}>
-        <FormControl>
-          <FormLabel mb={1}>Payment ID</FormLabel>
-          <Input required {...register("paymentId")} size="sm" mb={4} />
-        </FormControl>
-        <FormControl>
-          <FormLabel mb={1}>Amount</FormLabel>
-          <Input required {...register("amount")} size="sm" mb={4} />
-        </FormControl>
-        <FormControl>
-          <FormLabel mb={1}>Wallet address</FormLabel>
-          <Input
-            required
-            value={walletAddress.wallet}
-            readOnly
-            {...register("address")}
-            size="sm"
-            mb={4}
-          />
-        </FormControl>
-        <FormControl>
-          <FormLabel mb={1}>API Key</FormLabel>
-          <Input required {...register("apiKey")} size="sm" mb={4} />
-        </FormControl>
-
-        <FormControl>
-          <FormLabel mb={1}>Redirect URL when payment is received</FormLabel>
-          <Input
-            required
-            size="sm"
-            {...register("redirectURL")}
-            placeholder="https://"
-            mb={4}
-          />
-        </FormControl>
-        <Button type="submit" isFullWidth disabled={isLoading}>
-          {isLoading ? <Spinner /> : "Checkout with Reef"}
-        </Button>
-      </Box>
+      {isLoading ? (
+        <Skeleton height="420px" />
+      ) : error ? (
+        <ErrorMessage error={error} retry={checkout.refetch} />
+      ) : (
+        <PaymentForm
+          address={walletAddress.wallet}
+          apiKey={apiKey.apiKey}
+          isLoading={checkout.isLoading}
+          onSubmit={sendAndSave}
+        />
+      )}
     </Box>
   );
 }

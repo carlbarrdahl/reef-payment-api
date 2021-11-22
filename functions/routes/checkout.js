@@ -58,6 +58,7 @@ module.exports = (app, { db, createReefApi }) => {
         type: "object",
         properties: {
           paymentId: { type: "string" },
+          address: { type: "string" },
           amount: { type: "string", pattern: "^[0-9]+$" },
           redirectURL: { format: "uri", pattern: "^https?://" },
         },

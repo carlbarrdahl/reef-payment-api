@@ -82,7 +82,6 @@ function ConfigWalletAddress() {
     isLoading,
   } = useWalletAddress();
 
-  console.log("wallet", wallet);
   // Update input field if server returns data
   useEffect(() => {
     setAddress(walletAddress);

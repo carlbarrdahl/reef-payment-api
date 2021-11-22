@@ -4,6 +4,9 @@
   - merchant admin
   - paying customer
 
+- move reef payments to /helpers
+- add finalized block in payment db
+
 ## V2
 
 - [ ] Create Payment request to Payment API (to be called from Merchant backend)

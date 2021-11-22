@@ -84,11 +84,11 @@ export function useCheckout() {
       method: "POST",
       body: JSON.stringify({
         paymentId,
-        address,
-        amount: (
-          Number(amount) *
-          10 ** config.network.tokenDecimals
-        ).toString(),
+        address: 0,
+        // amount: (
+        //   Number(amount) *
+        //   10 ** config.network.tokenDecimals
+        // ).toString(),
         redirectURL,
         timestamp: Date.now(),
       }),
