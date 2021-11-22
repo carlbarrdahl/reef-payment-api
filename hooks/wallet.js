@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 import { WsProvider } from "@polkadot/rpc-provider";
 import { keyring } from "@polkadot/ui-keyring";
@@ -8,7 +8,7 @@ import { Provider, Signer } from "@reef-defi/evm-provider";
 import config from "../config";
 const SS58_FORMAT = 42;
 
-export function useWallet() {
+export function useWeb3() {
   const [state, setState] = useState({});
 
   useEffect(() => {
@@ -80,4 +80,13 @@ export function useWallet() {
   }
 
   return { ...state, transfer };
+}
+
+const Context = createContext({});
+
+export const useWallet = () => useContext(Context);
+
+export default function Web3Provider({ children }) {
+  const state = useWeb3();
+  return <Context.Provider value={state}>{children}</Context.Provider>;
 }
