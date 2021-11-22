@@ -33,12 +33,13 @@ const mockData = {
 };
 
 const setMock = jest.fn();
+const reefAccountMock = jest.fn();
 const ctx = {
   createReefApi: () => {
     return {
       query: {
         system: {
-          account: (address, callback) => {},
+          account: reefAccountMock,
         },
       },
       tx: {
@@ -117,7 +118,7 @@ describe("Reef Payment API", () => {
     expect(typeof res.body.wallet).toBe("string");
   });
 
-  test.only("POST /checkout", async () => {
+  test("POST /checkout", async () => {
     const res = await request(checkoutController(app, ctx))
       .post("/checkout")
       .set(headers)
@@ -130,8 +131,23 @@ describe("Reef Payment API", () => {
       });
 
     console.log(res.error);
-    expect(res.statusCode).toBe(201);
+    expect(res.statusCode).toBe(200);
+    expect(setMock).toHaveBeenNthCalledWith(1, {
+      address: "<test-address>",
+      mnemonic: expect.any(String),
+    });
+    expect(setMock).toHaveBeenNthCalledWith(2, {
+      address: "<test-address>",
+      amount: expect.any(String),
+    });
 
+    expect(res.body).toEqual({ checkoutURL: expect.any(String) });
+
+    // Checking for transfers
+    expect(reefAccountMock).toHaveBeenCalledWith(
+      "<test-address>",
+      expect.any(Function)
+    );
     // expect(ctx.db.ref).toHaveBeenCalledWith("/users/test-user/checkout");
     // expect(setMock).toHaveBeenCalledWith(mockData.checkout);
     // expect(typeof res.body.checkout).toBe("string");

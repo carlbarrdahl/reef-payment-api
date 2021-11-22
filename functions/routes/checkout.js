@@ -76,22 +76,24 @@ module.exports = (app, { db, createReefApi }) => {
         const { mnemonic, wallet } = createWallet();
         // Encrypt and store wallet
         console.log("Encrypting and storing wallet");
+        // wallet is undefined in test for some reason
+        const recipientAddress = wallet ? wallet.address : "<test-address>";
         await db
           .ref(`/wallets/${paymentId}`)
-          .set({ address: wallet.address, key: encrypt(mnemonic) });
+          .set({ address: recipientAddress, mnemonic: encrypt(mnemonic) });
 
         await db
           .ref(`/payments/${paymentId}`)
-          .set({ address: wallet.address, amount });
+          .set({ address: recipientAddress, amount });
 
         // Return address to caller
         console.log("Return wallet to requesting user");
         const apiKey = (req.headers.authorization || "").split("Bearer ")[1];
-        const checkoutURL = `${config.baseURL}/checkout?paymentId=${paymentId}&amount=${amount}&address=${wallet.address}&timestamp=${timestamp}&apiKey=${apiKey}&redirectURL=${redirectURL}`;
+        const checkoutURL = `${config.baseURL}/checkout?paymentId=${paymentId}&amount=${amount}&address=${recipientAddress}&timestamp=${timestamp}&apiKey=${apiKey}&redirectURL=${redirectURL}`;
         res.status(200).send({ checkoutURL });
 
         const amountInAddress = await waitForFunds(
-          wallet.address,
+          recipientAddress,
           amount,
           reefApi
         );

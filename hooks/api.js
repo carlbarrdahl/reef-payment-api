@@ -34,7 +34,6 @@ export const useAPIKey = () => {
     // { enabled: false } // Lazy-loading of api key
   );
 
-  console.log("useAIKEY", post.error, get.error);
   return {
     apiKey: get.data?.key,
     create: post.mutateAsync,
@@ -84,11 +83,11 @@ export function useCheckout() {
       method: "POST",
       body: JSON.stringify({
         paymentId,
-        address: 0,
-        // amount: (
-        //   Number(amount) *
-        //   10 ** config.network.tokenDecimals
-        // ).toString(),
+        address,
+        amount: (
+          Number(amount) *
+          10 ** config.network.tokenDecimals
+        ).toString(),
         redirectURL,
         timestamp: Date.now(),
       }),
