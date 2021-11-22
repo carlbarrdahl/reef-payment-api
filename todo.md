@@ -4,15 +4,12 @@
   - merchant admin
   - paying customer
 
-- move reef payments to /helpers
-- add finalized block in payment db
-
 ## V2
 
 - [ ] Create Payment request to Payment API (to be called from Merchant backend)
   - [x] Create `POST /checkout` endpoint
   - [x] Receive `paymentId`, `amount`, `merchant_address`, `timestamp`, `redirectUrl`, `apiKey` (in header)
-  - [ ] Validate params (amount is number, redirect is url, timestamp is recent)
+  - [x] Validate params (amount is number, redirect is url, timestamp is recent)
   - [ ] Receive lineItems and store so Checkout UI can be richer with information (out of scope)
   - [x] Generate wallet
   - [x] Encrypt and store address + key
