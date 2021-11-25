@@ -84,7 +84,7 @@ export default function SimulatePayment(props) {
         Simulate payment
       </Heading>
       {isLoading ? (
-        <Skeleton height="420px" />
+        <Skeleton height="268px" />
       ) : error ? (
         <ErrorMessage error={error} retry={checkout.refetch} />
       ) : (
