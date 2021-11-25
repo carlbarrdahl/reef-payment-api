@@ -32,24 +32,14 @@ function PaymentForm({ address, apiKey, isLoading, onSubmit }) {
   const { register, handleSubmit } = useForm({
     defaultValues: {
       ...store.get(),
-      address,
       apiKey,
-      paymentId: Math.random().toString(16).substr(2),
     },
   });
   return (
     <Box as="form" onSubmit={handleSubmit(onSubmit)}>
       <FormControl>
-        <FormLabel mb={1}>Payment ID</FormLabel>
-        <Input required {...register("paymentId")} size="sm" mb={4} />
-      </FormControl>
-      <FormControl>
         <FormLabel mb={1}>Amount</FormLabel>
         <Input required {...register("amount")} size="sm" mb={4} />
-      </FormControl>
-      <FormControl>
-        <FormLabel mb={1}>Wallet address</FormLabel>
-        <Input required {...register("address")} size="sm" mb={4} />
       </FormControl>
       <FormControl>
         <FormLabel mb={1}>API Key</FormLabel>
