@@ -8,7 +8,9 @@
 
 - [ ] Create Payment request to Payment API (to be called from Merchant backend)
   - [x] Create `POST /checkout` endpoint
-  - [x] Receive `paymentId`, `amount`, `merchant_address`, `timestamp`, `redirectUrl`, `apiKey` (in header)
+  - [x] Generate `paymentId` and return with `checkoutURL`
+  - [x] Receive `amount`, `timestamp`, `redirectUrl`, `apiKey` (in header)
+  - [x] Get merchant wallet address from api key
   - [x] Validate params (amount is number, redirect is url, timestamp is recent)
   - [ ] Receive lineItems and store so Checkout UI can be richer with information (out of scope)
   - [x] Generate wallet
@@ -16,7 +18,7 @@
     - [x] `wallet[paymentId]`
   - [x] Return `checkoutUrl`
   - [x] Watch incoming transfers
-    - [ ] Unsub when `timestamp` + 5 min reached
+    - [x] Unsub when `timestamp` + 5 min reached
   - [x] Transfer to merchant `address`
   - [x] Store event in db `payment[paymentId]`
 - [x] Simulate Payment in Merchant Dashboard
@@ -26,12 +28,12 @@
 - [ ] Checkout UI
   - [x] Create checkout page (reached via `checkoutUrl`)
   - [x] Get query params (`redirectUrl`, `amount`, `timestamp`, `address`)
-  - [ ] Display countdown from `timestamp`
+  - [x] Display countdown from `timestamp`
+    - [x] Show time's up and redirect user back
   - [x] Display address and amount to pay to
   - [x] Pay Button to trigger Polkadot extension
   - [x] Watch `payment[paymentId]` for payments
   - [x] Display success message and redirect to `redirectUrl`
-  - [ ] When countdown runs out - display retry button (out of scope)
 
 ---
 

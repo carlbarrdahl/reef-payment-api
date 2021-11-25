@@ -34,6 +34,8 @@ const mockData = {
 
 const setMock = jest.fn();
 const reefAccountMock = jest.fn();
+const reefBalanceMock = jest.fn();
+
 const ctx = {
   createReefApi: () => {
     return {
@@ -45,7 +47,7 @@ const ctx = {
       tx: {
         balances: {
           transfer: (address, amount) => ({
-            paymentInfo: (wallet) => ({}),
+            paymentInfo: reefBalanceMock,
           }),
         },
       },
@@ -141,13 +143,18 @@ describe("Reef Payment API", () => {
       amount: expect.any(String),
     });
 
-    expect(res.body).toEqual({ checkoutURL: expect.any(String) });
+    expect(res.body).toEqual({
+      paymentId: expect.any(String),
+      checkoutURL: expect.any(String),
+    });
 
     // Checking for transfers
     expect(reefAccountMock).toHaveBeenCalledWith(
       "<test-address>",
       expect.any(Function)
     );
+    // Check transfer fee
+    // expect(reefBalanceMock).toHaveBeenCalledWith();
     // expect(ctx.db.ref).toHaveBeenCalledWith("/users/test-user/checkout");
     // expect(setMock).toHaveBeenCalledWith(mockData.checkout);
     // expect(typeof res.body.checkout).toBe("string");

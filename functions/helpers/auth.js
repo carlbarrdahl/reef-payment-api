@@ -25,6 +25,12 @@ async function apiKeyMiddleware(req, res, next) {
     if (!uid) {
       return res.status(401).send({ error: "Invalid API key" });
     }
+    const user = await db
+      .ref(`/users/${uid}`)
+      .once("value")
+      .then((snap) => snap.val());
+
+    req.user = user;
     next();
   } catch (error) {
     next(error);

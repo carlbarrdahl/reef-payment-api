@@ -14,6 +14,7 @@ const decrypt = (string) => string;
 async function waitForFunds(address, amount, api) {
   console.log("Watching for changes in created wallet:", address);
   return new Promise(async (resolve, reject) => {
+    let _timeout;
     const unsub = await api.query.system.account(
       address,
       async ({ data: { free } }) => {
@@ -23,12 +24,19 @@ async function waitForFunds(address, amount, api) {
         if (balance >= BigInt(amount)) {
           unsub();
           resolve(balance);
+          clearTimeout(_timeout);
         } else {
           console.log("Balance is less than expected amount");
           console.log("Waiting for more transfers...");
         }
       }
     );
+    _timeout = setTimeout(() => {
+      console.log("Transaction timed out");
+      clearTimeout(_timeout);
+      unsub();
+      reject("Transaction timed out");
+    }, 1000 * 60 * 5);
   });
 }
 
@@ -57,18 +65,18 @@ module.exports = (app, { db, createReefApi }) => {
       body: {
         type: "object",
         properties: {
-          paymentId: { type: "string" },
-          address: { type: "string" },
           amount: { type: "string", pattern: "^[0-9]+$" },
           redirectURL: { format: "uri", pattern: "^https?://" },
         },
-        required: ["paymentId", "amount", "redirectURL", "address"],
+        required: ["amount", "redirectURL"],
       },
     }),
     async (req, res) => {
       try {
-        const { amount, paymentId, redirectURL, address, timestamp } = req.body;
-        console.log("Validating req.body", req.body);
+        const paymentId = Math.random().toString(16).substr(2);
+        const timestamp = Date.now();
+        const { amount, redirectURL } = req.body;
+
         console.log("Creating Reef API", createReefApi);
         const reefApi = await createReefApi();
         console.log("Generating random wallet");
@@ -76,6 +84,7 @@ module.exports = (app, { db, createReefApi }) => {
         const { mnemonic, wallet } = createWallet();
         // Encrypt and store wallet
         console.log("Encrypting and storing wallet");
+        const merchantAddress = req.user.address;
         // wallet is undefined in test for some reason
         const recipientAddress = wallet ? wallet.address : "<test-address>";
         await db
@@ -84,30 +93,32 @@ module.exports = (app, { db, createReefApi }) => {
 
         await db
           .ref(`/payments/${paymentId}`)
-          .set({ address: recipientAddress, amount });
+          .set({ address: recipientAddress, amount, status: "WAITING" });
 
         // Return address to caller
         console.log("Return wallet to requesting user");
         const apiKey = (req.headers.authorization || "").split("Bearer ")[1];
         const checkoutURL = `${config.baseURL}/checkout?paymentId=${paymentId}&amount=${amount}&address=${recipientAddress}&timestamp=${timestamp}&apiKey=${apiKey}&redirectURL=${redirectURL}`;
-        res.status(200).send({ checkoutURL });
+        res.status(200).send({ paymentId, checkoutURL });
 
         const amountInAddress = await waitForFunds(
           recipientAddress,
           amount,
           reefApi
+        ).catch(() =>
+          db.ref(`/payments/${paymentId}`).update({ status: "TIMEOUT" })
         );
 
         console.log("Getting transaction fee");
         const { partialFee } = await reefApi.tx.balances
-          .transfer(address, amount)
+          .transfer(merchantAddress, amount)
           .paymentInfo(wallet);
 
         const fee = partialFee.toBigInt();
         console.log("Fee:", fee);
 
         const event = await payWallet(
-          address,
+          merchantAddress,
           amountInAddress - fee,
           wallet,
           reefApi
@@ -115,6 +126,7 @@ module.exports = (app, { db, createReefApi }) => {
 
         await db.ref(`/payments/${paymentId}`).update({
           paidAmount: amountInAddress.toString(),
+          status: "PAID",
           // status: event.status,
         });
 
