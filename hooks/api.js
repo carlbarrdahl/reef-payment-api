@@ -107,6 +107,6 @@ export function useWatchPayment({ apiKey, paymentId }) {
         },
       });
     },
-    { refetchInterval: 2000 }
+    { enabled: !!(apiKey && paymentId), refetchInterval: 2000 }
   );
 }
