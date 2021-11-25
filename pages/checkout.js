@@ -105,7 +105,7 @@ export default function CheckoutPage() {
                 <Button
                   variant="link"
                   color="blue.500"
-                  onClick={() => alert("back")}
+                  onClick={() => window.history.back()}
                   target="_blank"
                 >
                   Back to Checkout
