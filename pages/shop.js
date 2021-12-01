@@ -1,82 +1,135 @@
 import {
   Box,
+  Divider,
+  AspectRatio,
   Image,
   Flex,
   Button,
   Input,
-  InputGroup,
-  InputRightAddon,
   FormControl,
   FormLabel,
+  Text,
+  Heading,
+  SimpleGrid,
   Spinner,
 } from "@chakra-ui/react";
-import { request } from "../lib/request";
-import { useMutation } from "react-query";
-import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
+import { store } from "../utils/localStorage";
+import { useCheckout } from "../hooks/api";
+import { useState } from "react";
 import config from "../config";
-import { useWallet } from "../hooks/wallet";
 
-function usePayment() {
-  return useMutation(({ apiKey, amount, address, redirectURL }) => {
-    return request(`/api/checkout`, {
-      method: "POST",
-      body: JSON.stringify({
-        paymentId: Math.random().toString(16).substr(2),
-        address,
-        amount: (
-          Number(amount) *
-          10 ** config.network.tokenDecimals
-        ).toString(),
-        redirectURL,
-        timestamp: Date.now(),
-      }),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + apiKey,
-      },
-    });
-  });
+function useCart() {
+  const [quantities, setQuantity] = useState({});
+
+  const inc = (pid) =>
+    setQuantity({ ...quantities, [pid]: (quantities[pid] || 0) + 1 });
+  const dec = (pid) =>
+    setQuantity({ ...quantities, [pid]: (quantities[pid] || 0) - 1 });
+
+  return { inc, dec, quantities };
 }
 
-const store = {
-  get: () => {
-    try {
-      return JSON.parse(localStorage.getItem("merchant-shop"));
-    } catch (error) {}
-    return {};
+function getCart(products, quantities) {
+  return products.reduce(
+    (cart, p) => {
+      const quantity = quantities[p.id] || 0;
+      return {
+        lineItems:
+          // Add the item if its in the cart
+          quantity > 0
+            ? cart.lineItems.concat({ quantity, price: p.price })
+            : cart.lineItems,
+        totalAmount: cart.totalAmount + p.amount * quantity,
+      };
+    },
+    { lineItems: [], totalAmount: 0 }
+  );
+}
+
+function ProductCard({ product, quantity = 0, onRemoveFromCart, onAddToCart }) {
+  return (
+    <Box bg="white" boxShadow="lg" mb={4}>
+      <AspectRatio maxW="400px" ratio={4 / 3}>
+        <Image src={product.image} objectFit="cover" />
+      </AspectRatio>
+      <Box p={2}>
+        <Flex justifyContent="space-between" mb={4}>
+          <Heading fontSize="md">{product.name}</Heading>
+          <Text>
+            {product.amount / 10 ** config.network.tokenDecimals} REEF
+          </Text>
+        </Flex>
+        <Flex justifyContent="space-between">
+          <Flex alignItems="center">
+            <Text>{quantity}</Text>
+          </Flex>
+          <Flex>
+            <Button
+              size="sm"
+              onClick={onRemoveFromCart}
+              mr={2}
+              disabled={!quantity}
+            >
+              −
+            </Button>
+            <Button
+              onClick={onAddToCart}
+              colorScheme="purple"
+              variant="outline"
+              size="sm"
+            >
+              Add to Cart
+            </Button>
+          </Flex>
+        </Flex>
+      </Box>
+    </Box>
+  );
+}
+
+const products = [
+  {
+    id: "tshirt",
+    name: "T-shirt",
+    image:
+      "https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1372&q=80",
+    description: "Normal looking tshirt",
+    amount: 4 * 10 ** config.network.tokenDecimals,
   },
-  set: (val) => {
-    localStorage.setItem("merchant-shop", JSON.stringify(val));
+  {
+    id: "jeans",
+    name: "Jeans",
+    description: "Blue jeans",
+    image:
+      "https://images.unsplash.com/photo-1565084888279-aca607ecce0c?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
+    amount: 5.5 * 10 ** config.network.tokenDecimals,
   },
-};
+];
 
 export default function MerchantDemo() {
-  const router = useRouter();
-  const { register, handleSubmit, ...rest } = useForm({
-    defaultValues: store.get(),
+  const { register, handleSubmit } = useForm({
+    defaultValues: {
+      ...store.get(),
+    },
   });
-  const wallet = useWallet();
 
-  console.log("wallet", wallet);
+  const checkout = useCheckout();
 
-  const { data, error, isLoading, mutateAsync: createPayment } = usePayment();
+  const cart = useCart();
+  const total = getCart(products, cart.quantities);
 
-  console.log("ERORR", error);
-  function sendAndSave(values) {
+  function sendAndSave({ apikey, redirectURL }) {
     // Store in localStorage so we don't have to enter them every time
-    try {
-      store.set(values);
-    } catch (error) {}
-    createPayment({ ...values, address: wallet.wallet._substrateAddress })
-      .then(({ checkoutURL }) => {
-        console.log("Checkout URL", checkoutURL);
-        router.replace(checkoutURL);
-      })
+    store.set({ apikey, redirectURL });
+    checkout
+      .mutateAsync({ apikey, redirectURL, amount: cart.totalAmount })
+      .then(({ checkoutURL }) => (window.location = checkoutURL))
       .catch(console.log);
   }
 
-  console.log("MerchantDemo", data, error, isLoading, rest);
+  const isLoading = checkout.isLoading;
+  const error = checkout.error;
 
   return (
     <Flex
@@ -87,38 +140,46 @@ export default function MerchantDemo() {
       py={8}
       flexDirection="column"
     >
-      <Box maxW={380} as="form" onSubmit={handleSubmit(sendAndSave)}>
-        <Box bg="white" boxShadow="lg">
-          <Image src="https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1372&q=80" />
-          <Box p={8} mb={8}>
-            <FormControl>
-              <FormLabel fontSize="sm" mb={1}>
-                Amount
-              </FormLabel>
-              <InputGroup size="sm">
-                <Input
-                  required
-                  step={"any"}
-                  type="number"
-                  {...register("amount")}
-                  placeholder="Enter amount to pay..."
-                  disabled={isLoading}
-                  mb={4}
-                />
-                <InputRightAddon>REEF</InputRightAddon>
-              </InputGroup>
-            </FormControl>
-            <Button
-              type="submit"
-              isFullWidth
-              disabled={isLoading || !wallet.wallet}
+      <Box as="form" onSubmit={handleSubmit(sendAndSave)} p={4}>
+        <SimpleGrid
+          columns={[1, 2]}
+          columnGap={8}
+          w={["100%", "100%", "2xl"]}
+          mb={4}
+        >
+          {products.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              quantity={cart.quantities[product.id]}
+              onRemoveFromCart={() => cart.dec(product.id)}
+              onAddToCart={() => cart.inc(product.id)}
+            />
+          ))}
+        </SimpleGrid>
+        <Flex justifyContent="space-between" mb={8}>
+          <Box pr={2} minW="100px">
+            <Text
+              fontSize="xs"
+              textTransform="uppercase"
+              color="gray.500"
+              textAlign="center"
             >
-              {isLoading || !wallet.wallet ? <Spinner /> : "Pay with Reef"}
-            </Button>
+              Total
+            </Text>
+            <Text fontSize="md" textAlign="center">
+              {total.totalAmount / 10 ** config.network.tokenDecimals} REEF
+            </Text>
           </Box>
-        </Box>
-        {isLoading || data?.address ? null : (
-          <Box bg="white" boxShadow="lg" p={8}>
+          <Button type="submit" colorScheme="purple">
+            Pay with Reef
+          </Button>
+        </Flex>
+        {isLoading ? null : (
+          <Box bg="gray.100" boxShadow="sm" p={8}>
+            <Text mb={4} color="gray.600">
+              For testing different merchant settings
+            </Text>
             <FormControl>
               <FormLabel mb={1}>API Key</FormLabel>
               <Input
