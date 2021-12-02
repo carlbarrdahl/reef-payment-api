@@ -119,11 +119,16 @@ export default function MerchantDemo() {
   const cart = useCart();
   const total = getCart(products, cart.quantities);
 
-  function sendAndSave({ apikey, redirectURL }) {
+  function sendAndSave({ apiKey, redirectURL, ...rest }) {
+    console.log({ apiKey, redirectURL, amount: total.totalAmount });
     // Store in localStorage so we don't have to enter them every time
-    store.set({ apikey, redirectURL });
+    store.set({ apiKey, redirectURL });
     checkout
-      .mutateAsync({ apikey, redirectURL, amount: cart.totalAmount })
+      .mutateAsync({
+        apiKey,
+        redirectURL,
+        amount: total.totalAmount.toString(),
+      })
       .then(({ checkoutURL }) => (window.location = checkoutURL))
       .catch(console.log);
   }
@@ -171,8 +176,12 @@ export default function MerchantDemo() {
               {total.totalAmount / 10 ** config.network.tokenDecimals} REEF
             </Text>
           </Box>
-          <Button type="submit" colorScheme="purple">
-            Pay with Reef
+          <Button
+            disabled={checkout.isLoading || !total.totalAmount}
+            type="submit"
+            colorScheme="purple"
+          >
+            {checkout.isLoading ? <Spinner /> : "Pay with Reef"}
           </Button>
         </Flex>
         {isLoading ? null : (
@@ -182,13 +191,7 @@ export default function MerchantDemo() {
             </Text>
             <FormControl>
               <FormLabel mb={1}>API Key</FormLabel>
-              <Input
-                autoFocus
-                required
-                {...register("apiKey")}
-                size="sm"
-                mb={4}
-              />
+              <Input autoFocus {...register("apiKey")} size="sm" mb={4} />
             </FormControl>
 
             <FormControl>

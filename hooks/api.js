@@ -79,15 +79,13 @@ export const useWalletAddress = () => {
 
 export function useCheckout() {
   return useMutation(({ apiKey, amount, redirectURL }) => {
+    console.log(
+      amount,
+      (Number(amount) * 10 ** config.network.tokenDecimals).toString()
+    );
     return request(`/api/checkout`, {
       method: "POST",
-      body: JSON.stringify({
-        amount: (
-          Number(amount) *
-          10 ** config.network.tokenDecimals
-        ).toString(),
-        redirectURL,
-      }),
+      body: JSON.stringify({ amount, redirectURL }),
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + apiKey,

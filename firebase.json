@@ -11,6 +11,10 @@
         "destination": "/checkout.html"
       },
       {
+        "source": "/shop",
+        "destination": "/shop.html"
+      },
+      {
         "source": "/api",
         "function": "api"
       }
