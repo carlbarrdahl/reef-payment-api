@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 import { WsProvider } from "@polkadot/rpc-provider";
 import { keyring } from "@polkadot/ui-keyring";
@@ -8,7 +8,7 @@ import { Provider, Signer } from "@reef-defi/evm-provider";
 import config from "../config";
 const SS58_FORMAT = 42;
 
-export function useWallet() {
+export function useWeb3() {
   const [state, setState] = useState({});
 
   useEffect(() => {
@@ -58,6 +58,7 @@ export function useWallet() {
   }, []);
 
   async function transfer(address, amount) {
+    setState((state) => ({ ...state, transaction: "signing" }));
     const unsub = await state.api.tx.balances
       .transfer(address, amount)
       .signAndSend(
@@ -66,18 +67,30 @@ export function useWallet() {
         (result) => {
           console.log(`Current status is ${result.status}`);
           if (result.status.isInBlock) {
+            setState((state) => ({ ...state, transaction: "inblock" }));
             console.log(
               `Transaction included at blockHash ${result.status.asInBlock}`
             );
           } else if (result.status.isFinalized) {
+            setState((state) => ({ ...state, transaction: "finalized" }));
             console.log(
               `Transaction finalized at blockHash ${result.status.asFinalized}`
             );
             unsub();
           }
         }
-      );
+      )
+      .catch((err) => setState((state) => ({ ...state, transaction: null })));
   }
 
   return { ...state, transfer };
+}
+
+const Context = createContext({});
+
+export const useWallet = () => useContext(Context);
+
+export default function Web3Provider({ children }) {
+  const state = useWeb3();
+  return <Context.Provider value={state}>{children}</Context.Provider>;
 }

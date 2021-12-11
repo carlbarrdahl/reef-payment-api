@@ -39,3 +39,4 @@ serviceAccountKey.json
 
 firebase-debug.log
 functions/firebase-debug.log
+functions/coverage

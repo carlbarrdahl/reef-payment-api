@@ -5,11 +5,12 @@ import { FirebaseAppProvider } from "reactfire";
 
 import { createApolloClient } from "../lib/apollo";
 import config from "../config";
+import Web3Provider from "../hooks/wallet";
 
 const apolloClient = createApolloClient();
 
 const queryClient = new QueryClient({
-  defaultOptions: { refetchOnWindowFocus: false },
+  defaultOptions: { queries: { refetchOnWindowFocus: false } },
 });
 
 function MyApp({ Component, pageProps }) {
@@ -18,7 +19,9 @@ function MyApp({ Component, pageProps }) {
       <QueryClientProvider client={queryClient}>
         <ChakraProvider>
           <FirebaseAppProvider firebaseConfig={config.firebase}>
-            <Component {...pageProps} />
+            <Web3Provider>
+              <Component {...pageProps} />
+            </Web3Provider>
           </FirebaseAppProvider>
         </ChakraProvider>
       </QueryClientProvider>

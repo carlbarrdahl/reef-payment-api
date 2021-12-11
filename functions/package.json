@@ -4,17 +4,12 @@
   "scripts": {
     "shell": "firebase functions:shell",
     "start": "npm run shell",
+    "test": "jest",
     "serve": "NODE_ENV=development firebase emulators:start --only functions",
     "logs": "firebase functions:log"
   },
-  "engines": {
-    "node": "14"
-  },
   "main": "index.js",
   "dependencies": {
-    "firebase": "^8.9.1",
-    "firebase-admin": "^8.9.1",
-    "firebase-functions": "^3.14.1",
     "@polkadot/api": "^6.3.1",
     "@polkadot/rpc-provider": "^6.3.1",
     "@reef-defi/api": "^1.0.1",
@@ -22,12 +17,20 @@
     "@reef-defi/evm-provider": "^1.0.1",
     "@reef-defi/type-definitions": "^1.0.1",
     "@reef-defi/types": "^1.0.1",
-    "axios": "^0.24.0",
     "cors": "^2.8.5",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "express-ajv-middleware": "^2.0.2",
+    "firebase": "^8.9.1",
+    "firebase-admin": "^8.9.1",
+    "firebase-functions": "^3.14.1"
   },
   "devDependencies": {
-    "firebase-functions-test": "^0.2.0"
+    "@babel/core": "^7.16.0",
+    "@babel/preset-env": "^7.16.4",
+    "babel-jest": "^27.3.1",
+    "firebase-functions-test": "^0.2.0",
+    "jest": "^27.3.1",
+    "supertest": "^6.1.6"
   },
   "resolutions": {
     "@polkadot/api": "^6.3.1",

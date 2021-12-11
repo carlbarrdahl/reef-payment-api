@@ -1,148 +1,140 @@
 import {
-  Alert,
-  AlertTitle,
-  AlertIcon,
-  AlertDescription,
   Box,
+  Divider,
+  AspectRatio,
   Image,
   Flex,
-  Text,
-  Link,
   Button,
   Input,
-  InputGroup,
-  InputRightAddon,
   FormControl,
   FormLabel,
+  Text,
+  Heading,
+  SimpleGrid,
   Spinner,
 } from "@chakra-ui/react";
-import { request } from "../lib/request";
-import { useMutation, useQuery } from "react-query";
-
 import { useForm } from "react-hook-form";
+import { store } from "../utils/localStorage";
+import { useCheckout } from "../hooks/api";
+import { useState } from "react";
 import config from "../config";
-import { useWallet } from "../hooks/wallet";
-import { useEffect } from "react";
 
-function useWatchPayment(address) {
-  return useQuery(
-    ["payment", address],
-    () => {
-      return request(`/api/merchant/store?address=${address}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+function useCart() {
+  const [quantities, setQuantity] = useState({});
+
+  const inc = (pid) =>
+    setQuantity({ ...quantities, [pid]: (quantities[pid] || 0) + 1 });
+  const dec = (pid) =>
+    setQuantity({ ...quantities, [pid]: (quantities[pid] || 0) - 1 });
+
+  return { inc, dec, quantities };
+}
+
+function getCart(products, quantities) {
+  return products.reduce(
+    (cart, p) => {
+      const quantity = quantities[p.id] || 0;
+      return {
+        lineItems:
+          // Add the item if its in the cart
+          quantity > 0
+            ? cart.lineItems.concat({ quantity, price: p.price })
+            : cart.lineItems,
+        totalAmount: cart.totalAmount + p.amount * quantity,
+      };
     },
-    { refetchInterval: 2000 }
+    { lineItems: [], totalAmount: 0 }
   );
 }
 
-function usePayment() {
-  return useMutation(({ apiKey, amount, webhookURL }) => {
-    return request(`/api/pay`, {
-      method: "POST",
-      body: JSON.stringify({
-        amount: (
-          Number(amount) *
-          10 ** config.network.tokenDecimals
-        ).toString(),
-        webhookURL,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + apiKey,
-      },
-    });
-  });
-}
-
-const store = {
-  get: () => {
-    try {
-      return JSON.parse(localStorage.getItem("merchant-shop"));
-    } catch (error) {}
-    return {};
-  },
-  set: (val) => {
-    localStorage.setItem("merchant-shop", JSON.stringify(val));
-  },
-};
-
-function WaitingForPayment({ amount, address }) {
-  const { data, error, isLoading } = useWatchPayment(address);
-  console.log("WaitingForPayment", data, error, isLoading);
+function ProductCard({ product, quantity = 0, onRemoveFromCart, onAddToCart }) {
   return (
-    <Alert
-      colorScheme="white"
-      variant="subtle"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      textAlign="center"
-      height="200px"
-    >
-      {data?.status ? (
-        <>
-          <AlertIcon boxSize="40px" mr={0} />
-          <AlertTitle mt={4} mb={1} fontSize="lg">
-            Payment received!
-          </AlertTitle>
-          <AlertDescription maxWidth="sm" mb={4}>
-            Thanks for shopping with REEF
-          </AlertDescription>
-          <Link
-            color="blue.500"
-            href={`https://testnet.reefscan.com/block/${data?.status.finalized}`}
-            target="_blank"
-          >
-            View block in explorer
-          </Link>
-        </>
-      ) : (
-        <>
-          <Spinner />
-          <AlertTitle mt={4} mb={1} fontSize="lg">
-            Waiting for payment to
-          </AlertTitle>
-          <Input value={address} readOnly size="sm" mb={4} />
-          <AlertDescription>
-            <Text fontWeight="bold" as="span">
-              {amount / 10 ** config.network.tokenDecimals}{" "}
-              {config.network.tokenSymbol}
-            </Text>
-          </AlertDescription>
-        </>
-      )}
-    </Alert>
+    <Box bg="white" boxShadow="lg" mb={4}>
+      <AspectRatio maxW="400px" ratio={4 / 3}>
+        <Image src={product.image} objectFit="cover" />
+      </AspectRatio>
+      <Box p={2}>
+        <Flex justifyContent="space-between" mb={4}>
+          <Heading fontSize="md">{product.name}</Heading>
+          <Text>
+            {product.amount / 10 ** config.network.tokenDecimals} REEF
+          </Text>
+        </Flex>
+        <Flex justifyContent="space-between">
+          <Flex alignItems="center">
+            <Text>{quantity}</Text>
+          </Flex>
+          <Flex>
+            <Button
+              size="sm"
+              onClick={onRemoveFromCart}
+              mr={2}
+              disabled={!quantity}
+            >
+              −
+            </Button>
+            <Button
+              onClick={onAddToCart}
+              colorScheme="purple"
+              variant="outline"
+              size="sm"
+            >
+              Add to Cart
+            </Button>
+          </Flex>
+        </Flex>
+      </Box>
+    </Box>
   );
 }
+
+const products = [
+  {
+    id: "tshirt",
+    name: "T-shirt",
+    image:
+      "https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1372&q=80",
+    description: "Normal looking tshirt",
+    amount: 4 * 10 ** config.network.tokenDecimals,
+  },
+  {
+    id: "jeans",
+    name: "Jeans",
+    description: "Blue jeans",
+    image:
+      "https://images.unsplash.com/photo-1565084888279-aca607ecce0c?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
+    amount: 5.5 * 10 ** config.network.tokenDecimals,
+  },
+];
 
 export default function MerchantDemo() {
-  const { register, handleSubmit, ...rest } = useForm({
-    defaultValues: store.get(),
+  const { register, handleSubmit } = useForm({
+    defaultValues: {
+      ...store.get(),
+    },
   });
-  const wallet = useWallet();
 
-  console.log("wallet", wallet);
+  const checkout = useCheckout();
 
-  const { data, error, isLoading, mutateAsync: createPayment } = usePayment();
+  const cart = useCart();
+  const total = getCart(products, cart.quantities);
 
-  useEffect(() => {
-    if (data?.address) {
-      wallet.transfer(data.address, data.amount);
-    }
-  }, [data?.address]);
-
-  function sendAndSave(values) {
+  function sendAndSave({ apiKey, redirectURL, ...rest }) {
+    console.log({ apiKey, redirectURL, amount: total.totalAmount });
     // Store in localStorage so we don't have to enter them every time
-    try {
-      store.set(values);
-    } catch (error) {}
-    createPayment(values);
+    store.set({ apiKey, redirectURL });
+    checkout
+      .mutateAsync({
+        apiKey,
+        redirectURL,
+        amount: total.totalAmount.toString(),
+      })
+      .then(({ checkoutURL }) => (window.location = checkoutURL))
+      .catch(console.log);
   }
 
-  console.log("MerchantDemo", data, error, isLoading, rest);
+  const isLoading = checkout.isLoading;
+  const error = checkout.error;
 
   return (
     <Flex
@@ -153,54 +145,63 @@ export default function MerchantDemo() {
       py={8}
       flexDirection="column"
     >
-      <Box maxW={380} as="form" onSubmit={handleSubmit(sendAndSave)}>
-        <Box bg="white" boxShadow="lg">
-          <Image src="https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1372&q=80" />
-          {data?.address ? (
-            <WaitingForPayment {...data} />
-          ) : (
-            <Box p={8} mb={8}>
-              <FormControl>
-                <FormLabel fontSize="sm" mb={1}>
-                  Amount
-                </FormLabel>
-                <InputGroup size="sm">
-                  <Input
-                    required
-                    step={"any"}
-                    type="number"
-                    {...register("amount")}
-                    placeholder="Enter amount to pay..."
-                    disabled={isLoading}
-                    mb={4}
-                  />
-                  <InputRightAddon>REEF</InputRightAddon>
-                </InputGroup>
-              </FormControl>
-              <Button type="submit" isFullWidth disabled={isLoading}>
-                {isLoading ? <Spinner /> : "Pay"}
-              </Button>
-            </Box>
-          )}
-        </Box>
-        {isLoading || data?.address ? null : (
-          <Box bg="white" boxShadow="lg" p={8}>
+      <Box as="form" onSubmit={handleSubmit(sendAndSave)} p={4}>
+        <SimpleGrid
+          columns={[1, 2]}
+          columnGap={8}
+          w={["100%", "100%", "2xl"]}
+          mb={4}
+        >
+          {products.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              quantity={cart.quantities[product.id]}
+              onRemoveFromCart={() => cart.dec(product.id)}
+              onAddToCart={() => cart.inc(product.id)}
+            />
+          ))}
+        </SimpleGrid>
+        <Flex justifyContent="space-between" mb={8}>
+          <Box pr={2} minW="100px">
+            <Text
+              fontSize="xs"
+              textTransform="uppercase"
+              color="gray.500"
+              textAlign="center"
+            >
+              Total
+            </Text>
+            <Text fontSize="md" textAlign="center">
+              {total.totalAmount / 10 ** config.network.tokenDecimals} REEF
+            </Text>
+          </Box>
+          <Button
+            disabled={checkout.isLoading || !total.totalAmount}
+            type="submit"
+            colorScheme="purple"
+          >
+            {checkout.isLoading ? <Spinner /> : "Pay with Reef"}
+          </Button>
+        </Flex>
+        {isLoading ? null : (
+          <Box bg="gray.100" boxShadow="sm" p={8}>
+            <Text mb={4} color="gray.600">
+              For testing different merchant settings
+            </Text>
             <FormControl>
               <FormLabel mb={1}>API Key</FormLabel>
-              <Input
-                autoFocus
-                required
-                {...register("apiKey")}
-                size="sm"
-                mb={4}
-              />
+              <Input autoFocus {...register("apiKey")} size="sm" mb={4} />
             </FormControl>
+
             <FormControl>
-              <FormLabel mb={1}>Webhook to trigger after payment</FormLabel>
+              <FormLabel mb={1}>
+                Redirect URL when payment is received
+              </FormLabel>
               <Input
                 required
                 size="sm"
-                {...register("webhookURL")}
+                {...register("redirectURL")}
                 placeholder="https://"
                 mb={4}
               />

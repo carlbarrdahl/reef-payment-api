@@ -7,6 +7,10 @@
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**", ".git/**"],
     "rewrites": [
       {
+        "source": "/checkout",
+        "destination": "/checkout.html"
+      },
+      {
         "source": "/shop",
         "destination": "/shop.html"
       },

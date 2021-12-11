@@ -2,6 +2,7 @@ import { useAuth } from "reactfire";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 
 import { request } from "../lib/request";
+import config from "../config";
 
 export const useAPIKey = () => {
   const auth = useAuth();
@@ -33,7 +34,6 @@ export const useAPIKey = () => {
     // { enabled: false } // Lazy-loading of api key
   );
 
-  console.log("useAIKEY", post.error, get.error);
   return {
     apiKey: get.data?.key,
     create: post.mutateAsync,
@@ -76,3 +76,35 @@ export const useWalletAddress = () => {
     refetch: get.refetch,
   };
 };
+
+export function useCheckout() {
+  return useMutation(({ apiKey, amount, redirectURL }) => {
+    console.log(
+      amount,
+      (Number(amount) * 10 ** config.network.tokenDecimals).toString()
+    );
+    return request(`/api/checkout`, {
+      method: "POST",
+      body: JSON.stringify({ amount, redirectURL }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + apiKey,
+      },
+    });
+  });
+}
+
+export function useWatchPayment({ apiKey, paymentId }) {
+  return useQuery(
+    ["payment", paymentId],
+    () => {
+      return request(`/api/checkout/${paymentId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + apiKey,
+        },
+      });
+    },
+    { enabled: !!(apiKey && paymentId) /*refetchInterval: 2000*/ }
+  );
+}

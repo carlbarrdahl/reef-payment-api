@@ -8,7 +8,7 @@
     "export": "next export",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles",
     "deploy": "firebase deploy --only functions"
   },
   "dependencies": {

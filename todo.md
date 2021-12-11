@@ -4,6 +4,41 @@
   - merchant admin
   - paying customer
 
+## V2
+
+- [ ] Create Payment request to Payment API (to be called from Merchant backend)
+  - [x] Create `POST /checkout` endpoint
+  - [x] Generate `paymentId` and return with `checkoutURL`
+  - [x] Receive `amount`, `timestamp`, `redirectUrl`, `apiKey` (in header)
+  - [x] Get merchant wallet address from api key
+  - [x] Validate params (amount is number, redirect is url, timestamp is recent)
+  - [ ] Receive lineItems and store so Checkout UI can be richer with information (out of scope)
+  - [x] Generate wallet
+  - [x] Encrypt and store address + key
+    - [x] `wallet[paymentId]`
+  - [x] Return `checkoutUrl`
+  - [x] Watch incoming transfers
+    - [x] Unsub when `timestamp` + 5 min reached
+  - [x] Transfer to merchant `address`
+  - [x] Store event in db `payment[paymentId]`
+- [x] Simulate Payment in Merchant Dashboard
+  - [x] Form for params
+  - [x] Call checkout endpoint to get `checkoutUrl`
+  - [x] Redirect
+- [ ] Checkout UI
+  - [x] Create checkout page (reached via `checkoutUrl`)
+  - [x] Get query params (`redirectUrl`, `amount`, `timestamp`, `address`)
+  - [x] Display countdown from `timestamp`
+    - [x] Show time's up and redirect user back
+  - [x] Display address and amount to pay to
+  - [x] Pay Button to trigger Polkadot extension
+  - [x] Watch `payment[paymentId]` for payments
+  - [x] Display success message and redirect to `redirectUrl`
+
+---
+
+## V1
+
 - [x] Add ChakraUI
 - [x] Admin UI
   - [x] Auth - signIn/signOut
