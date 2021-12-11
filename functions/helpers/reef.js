@@ -9,7 +9,7 @@ module.exports.createWallet = function createWallet() {
   return { mnemonic, wallet };
 };
 
-module.exports.walletFromMnemonic = function walletFromMnemonic(menemonic) {
+module.exports.walletFromMnemonic = function walletFromMnemonic(mnemonic) {
   const keyring = new Keyring({ type: "sr25519" });
   return keyring.addFromMnemonic(mnemonic);
 };

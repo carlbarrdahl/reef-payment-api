@@ -56,7 +56,7 @@ async function payWallet(address, amount, wallet, api) {
   });
 }
 
-async function createPayment({ paymentId, amount, address, mnemonic }) {
+async function createPayment({ paymentId, amount, address, mnemonic }, { db }) {
   console.log("Creating payment:", paymentId, amount, address);
   return Promise.all([
     db.ref(`/wallets/${paymentId}`).set({ mnemonic: encrypt(mnemonic) }),
@@ -93,12 +93,15 @@ module.exports = (app, { db, createReefApi }) => {
         const address = wallet ? wallet.address : "<test-address>";
 
         console.log("Encrypting and storing wallet");
-        await createPayment({
-          paymentId,
-          amount,
-          address,
-          mnemonic: encrypt(mnemonic),
-        });
+        await createPayment(
+          {
+            paymentId,
+            amount,
+            address,
+            mnemonic: encrypt(mnemonic),
+          },
+          { db }
+        );
 
         // Return address to caller
         console.log("Build checkoutURL");
@@ -165,6 +168,7 @@ module.exports = (app, { db, createReefApi }) => {
         // status: event.status,
       });
 
+      const payment = await get(`/payments/${paymentId}`);
       console.log("All done");
 
       res.send(payment);

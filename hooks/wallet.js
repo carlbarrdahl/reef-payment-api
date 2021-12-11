@@ -58,6 +58,7 @@ export function useWeb3() {
   }, []);
 
   async function transfer(address, amount) {
+    setState((state) => ({ ...state, transaction: "signing" }));
     const unsub = await state.api.tx.balances
       .transfer(address, amount)
       .signAndSend(
@@ -66,17 +67,20 @@ export function useWeb3() {
         (result) => {
           console.log(`Current status is ${result.status}`);
           if (result.status.isInBlock) {
+            setState((state) => ({ ...state, transaction: "inblock" }));
             console.log(
               `Transaction included at blockHash ${result.status.asInBlock}`
             );
           } else if (result.status.isFinalized) {
+            setState((state) => ({ ...state, transaction: "finalized" }));
             console.log(
               `Transaction finalized at blockHash ${result.status.asFinalized}`
             );
             unsub();
           }
         }
-      );
+      )
+      .catch((err) => setState((state) => ({ ...state, transaction: null })));
   }
 
   return { ...state, transfer };

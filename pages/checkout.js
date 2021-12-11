@@ -61,6 +61,7 @@ export default function CheckoutPage() {
   const wallet = useWallet();
   const [isTimeUp, setTimesUp] = useState(false);
 
+  console.log(wallet.transaction);
   const { data, error, isLoading } = useWatchPayment({ apiKey, paymentId });
 
   useEffect(() => {
@@ -90,8 +91,6 @@ export default function CheckoutPage() {
             alignItems="center"
             justifyContent="center"
             textAlign="center"
-            // height="200px"
-            // mb={8}
           >
             {isTimeUp ? (
               <>
@@ -111,7 +110,7 @@ export default function CheckoutPage() {
                   Back to Checkout
                 </Button>
               </>
-            ) : data?.paidAmount ? (
+            ) : wallet.transaction === "finalized" || data?.paidAmount ? (
               <>
                 <AlertIcon boxSize="40px" mr={0} />
                 <AlertTitle mt={4} mb={1} fontSize="lg">
@@ -146,9 +145,9 @@ export default function CheckoutPage() {
                   colorScheme="purple"
                   onClick={() => wallet.transfer(address, amount)}
                   isFullWidth
-                  disabled={isLoading || !wallet.wallet}
+                  disabled={wallet.transaction || !wallet.wallet}
                 >
-                  {isLoading ? <Spinner /> : "Pay with Reef"}
+                  {wallet.transaction ? <Spinner /> : "Pay with Reef"}
                 </Button>
               </>
             )}
