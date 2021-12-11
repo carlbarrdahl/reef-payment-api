@@ -29,5 +29,5 @@ app.use((error, req, res, next) => {
 });
 
 exports.api = functions
-  .runWith({ timeoutSeconds: 3 * 60, memory: "1GB" })
+  .runWith({ timeoutSeconds: 5 * 60, memory: "1GB" })
   .https.onRequest(app);
