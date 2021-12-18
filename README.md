@@ -21,8 +21,18 @@ Works like this:
 - Refund payments (this must be done in the browser with the merchant wallet signed in with polkadot ext.)
 - Admin UI to manage merchants
 
+### Screenshots
+
+#### Admin UI
+
 ![](screenshot_admin.png)
+
+#### Merchant Shop
+
 ![](screenshot_shop1.png)
+
+#### Checkout page
+
 ![](screenshot_checkout.png)
 
 #### Created as a submission to DeFi & Cross-Chain Interoperability Hackathon
