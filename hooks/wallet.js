@@ -35,18 +35,20 @@ export function useWeb3() {
 
             console.log("account", account);
             console.log("ext", ext);
-            const evmAddress =
-              await provider.api.query.evmAccounts.evmAddresses(
-                account.address
-              );
-            console.log("evmAddress", evmAddress);
-            const wallet = new Signer(provider, account.address, ext.signer);
+            if (account) {
+              const evmAddress =
+                await provider.api.query.evmAccounts.evmAddresses(
+                  account.address
+                );
+              console.log("evmAddress", evmAddress);
+              const wallet = new Signer(provider, account.address, ext.signer);
 
-            console.log("wallet", wallet);
+              console.log("wallet", wallet);
 
-            const injector = await web3FromAddress(wallet._substrateAddress);
-            console.log("injector", injector);
-            setState({ wallet, api: provider.api, signer: injector.signer });
+              const injector = await web3FromAddress(wallet._substrateAddress);
+              console.log("injector", injector);
+              setState({ wallet, api: provider.api, signer: injector.signer });
+            }
           } catch (error) {
             console.error("Unable to load chain", error);
           }

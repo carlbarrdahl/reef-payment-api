@@ -24,6 +24,8 @@ import { timeAgo, truncate } from "../utils/format";
 import config from "../config";
 import { useWalletAddress } from "../hooks/api";
 
+import ErrorMessage from "./ErrorMessage";
+
 const SUBSCRIPTION_QUERY = gql`
   subscription transfer($accountId: String!) {
     transfer(
@@ -75,7 +77,11 @@ function TableWithData({ accountId, onChangeAddress }) {
         {loading || error ? (
           <Tr>
             <Td colSpan={7}>
-              {loading ? <SkeletonText noOfLines={1} /> : <pre>{error}</pre>}
+              {loading ? (
+                <SkeletonText noOfLines={1} />
+              ) : (
+                <ErrorMessage>{error.message}</ErrorMessage>
+              )}
             </Td>
           </Tr>
         ) : (

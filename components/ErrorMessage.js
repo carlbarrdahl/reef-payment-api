@@ -9,9 +9,11 @@ export default function ErrorMessage({
       <AlertIcon />
       <Flex alignItems="center" justifyContent="space-between" flex="1">
         {error}
-        <Button size="sm" onClick={retry} colorScheme="red">
-          Retry
-        </Button>
+        {retry ? (
+          <Button size="sm" onClick={retry} colorScheme="red">
+            Retry
+          </Button>
+        ) : null}
       </Flex>
     </Alert>
   );

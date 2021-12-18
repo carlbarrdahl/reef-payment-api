@@ -3,13 +3,14 @@ const functions = require("firebase-functions");
 const express = require("express");
 const cors = require("cors");
 const { BadRequest } = require("throwable-http-errors");
+
+const { auth, db, config } = require("./config/firebase");
+const { createReefApi } = require("./config/reef");
+
 const app = express();
 app.use(cors({ origin: true }));
 
 app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
-
-const { auth, db, config } = require("./config/firebase");
-const { createReefApi } = require("./config/reef");
 
 const context = { auth, db, config, createReefApi };
 

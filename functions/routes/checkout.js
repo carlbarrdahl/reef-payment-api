@@ -10,7 +10,7 @@ const encrypt = (string) => string;
 const decrypt = (string) => string;
 
 // Watches an address for changes and compares new balance with requested amount
-async function waitForFunds(address, amount, api) {
+async function waitForFunds({ address, amount, timestamp }, api) {
   console.log("Watching for changes in created wallet:", address);
   return new Promise(async (resolve, reject) => {
     let _timeout;
@@ -35,7 +35,7 @@ async function waitForFunds(address, amount, api) {
       clearTimeout(_timeout);
       unsub();
       reject("Transaction timed out");
-    }, 1000 * 60 * 5);
+    }, 1000 * 60 * 5); // Todo: use timestamp here to calculate timeout
   });
 }
 
@@ -56,13 +56,16 @@ async function payWallet(address, amount, wallet, api) {
   });
 }
 
-async function createPayment({ paymentId, amount, address, mnemonic }, { db }) {
+async function createPayment(
+  { paymentId, amount, timestamp, address, mnemonic },
+  { db }
+) {
   console.log("Creating payment:", paymentId, amount, address);
   return Promise.all([
     db.ref(`/wallets/${paymentId}`).set({ mnemonic: encrypt(mnemonic) }),
     db
       .ref(`/payments/${paymentId}`)
-      .set({ address, amount, status: "WAITING" }),
+      .set({ address, amount, status: "WAITING", timestamp }),
   ]);
 }
 
@@ -98,6 +101,7 @@ module.exports = (app, { db, createReefApi }) => {
             paymentId,
             amount,
             address,
+            timestamp,
             mnemonic: encrypt(mnemonic),
           },
           { db }
@@ -129,12 +133,13 @@ module.exports = (app, { db, createReefApi }) => {
       const { paymentId } = req.params;
 
       const { mnemonic } = await get(`/wallets/${paymentId}`);
-      const { amount, address } = await get(`/payments/${paymentId}`);
+      const { amount, address, timestamp } = await get(
+        `/payments/${paymentId}`
+      );
 
       const reefApi = await createReefApi();
       const amountInAddress = await waitForFunds(
-        address,
-        amount,
+        { address, amount, timestamp },
         reefApi
       ).catch(() =>
         db.ref(`/payments/${paymentId}`).update({ status: "TIMEOUT" })
